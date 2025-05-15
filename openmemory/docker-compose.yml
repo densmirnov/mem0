@@ -5,13 +5,15 @@ services:
       - "6333:6333"
     volumes:
       - mem0_storage:/mem0/storage
+    networks:
+      - dokploy-network
   openmemory-mcp:
     image: mem0/openmemory-mcp
     build: api/
     environment:
+      - OPENAI_API_KEY
+      - DATABASE_URL
       - USER
-    env_file:
-      - api/.env
     depends_on:
       - mem0_store
     ports:
@@ -20,16 +22,24 @@ services:
       - ./api:/usr/src/openmemory
     command: >
       sh -c "uvicorn main:app --host 0.0.0.0 --port 8765 --reload --workers 4"
+    networks:
+      - dokploy-network
   openmemory-ui:
     build:
       context: ui/
       dockerfile: Dockerfile
     image: mem0/openmemory-ui:latest
     ports:
-      - "3000:3000"
+      - "3100:3000"  # Published:Target
     environment:
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-      - NEXT_PUBLIC_USER_ID=${USER}
+      - NEXT_PUBLIC_API_URL
+      - NEXT_PUBLIC_USER_ID
+    networks:
+      - dokploy-network
 
 volumes:
   mem0_storage:
+
+networks:
+  dokploy-network:
+    external: true
